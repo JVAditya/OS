@@ -1,12 +1,11 @@
 global outb
 global inb
 global panic
-global crash_me
 global EnableInterrupts
 global DisableInterrupts
 
 section .text
-align 4
+align 4096
     outb:
     ; outb - sends a byte to an I/O port
     ; [esp + 8] data byte
@@ -46,9 +45,4 @@ align 4
     
     DisableInterrupts:
         cli
-        ret
-
-    crash_me:
-        mov eax, 0
-        div eax
         ret

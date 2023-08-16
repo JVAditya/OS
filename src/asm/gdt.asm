@@ -1,31 +1,32 @@
 global load_gdt
 
-; load_gdt : Loads the GDT from address in the input
-; [esp + 4] : address of GDT struct
-; [esp + 8] : code segment byte offset in GDT
-; [esp + 12] : data segment byte offset in GDT
+section .text
+align 4096
+    ; load_gdt : Loads the GDT from address in the input
+    ; [esp + 4] : address of GDT struct
+    ; [esp + 8] : code segment byte offset in GDT
+    ; [esp + 12] : data segment byte offset in GDT
+    load_gdt:
 
-load_gdt:
-align 4
-    push ebp
-    mov ebp, esp
-    
-    mov eax, [ebp + 8]
-    lgdt [eax]
+        push ebp
+        mov ebp, esp
 
-    mov eax, [ebp + 12]
-    push eax
-    push .reload_cs
-    retf
+        mov eax, [ebp + 8]
+        lgdt [eax]       ; cs is set here, any code to be executed now has to be in the correct address so far jump
 
-    .reload_cs:
-        mov ax, [ebp + 16]
-        mov ds, ax
-        mov ss, ax
-        mov es, ax
-        mov fs, ax
-        mov gs, ax
+        mov eax, [ebp + 12]
+        push eax
+        push .reload_cs
+        retf
 
-    mov esp, ebp
-    pop ebp
-    ret
+        .reload_cs:
+            mov ax, [ebp + 16]
+            mov ds, ax
+            mov ss, ax
+            mov es, ax
+            mov fs, ax
+            mov gs, ax
+
+        mov esp, ebp
+        pop ebp
+        ret

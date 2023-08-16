@@ -1,3 +1,4 @@
+#pragma once
 #include <irq.h>
 #include <arch/io.h>
 

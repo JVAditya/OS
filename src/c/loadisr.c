@@ -5,7 +5,6 @@
 #include <loadisr.h>
 #include <stddef.h>
 #include <arch/io.h>
-#include <intr_num.h>
 
 ISRHandler g_ISRHandlers[256];
 
@@ -281,15 +280,10 @@ void __attribute__((cdecl)) interrupt_handler(Registers* regs){
         g_ISRHandlers[regs->interrupt](regs);
     }
     else if(regs->interrupt >= 32){
-        puts("Unhandled interrupt \0");
-        put_intr(regs->interrupt);
-        putc('\n');
+        printf("Unhandled interrupt %d\n", regs->interrupt);
     }
     else{
-        puts("Unhandled exception \0");
-        put_intr(regs->interrupt);
-        putc('\n');
-        puts("Kernel Panic!!\n\0");
+        printf("Unhandled exception %d\nKernel Panic!!\n", regs->interrupt);
         panic();
     }
 }

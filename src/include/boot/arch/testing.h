@@ -1,0 +1,1 @@
+void __attribute__((cdecl)) test_work(uint32_t test_num);

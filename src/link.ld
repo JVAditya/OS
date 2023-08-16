@@ -2,43 +2,45 @@ ENTRY(entry)
 
 SECTIONS {
     . = 0x00100000;
+    os_start = .;
 
-    .boot ALIGN (0x1000) :
+    .boot ALIGN (4K) :
     {
         __boot_start = .;
         *(.boot)
     }
 
-    .entry ALIGN (0x1000) :
+    .entry ALIGN (4K) :
     {
         __entry_start = .;
         *(.entry)
     }
 
-    .text ALIGN (0x1000) :    
+    . += 0xC0000000;
+    .text ALIGN (4K) : AT (ADDR (.text) - 0xC0000000)
     {   
         __text_start = .;
         *(.text)
     }
 
-    .data ALIGN (0x1000) :
+    .data ALIGN (4K) : AT (ADDR (.data) - 0xC0000000)
     {
         __data_start = .;
         *(.data)
     }
 
-    .rodata ALIGN (0x1000) :
+    .rodata ALIGN (4K) : AT (ADDR (.rodata) - 0xC0000000)
     {
         __rodata_start = .;
         *(.rodata*)
     }
 
-    .bss ALIGN (0x1000) :
+    .bss ALIGN (4K) : AT (ADDR (.bss) - 0xC0000000)
     {
         __bss_start = .; 
         *(COMMON)
         *(.bss)
     }
 
-    __end = .;
+    os_end = .;
 }

@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <arch/io.h>
 #include <stddef.h>
-#include <intr_num.h>
 
 
 #define PIC_REMAP_OFFSET    0x20
@@ -16,9 +15,7 @@ void irq_handler(Registers* regs){
         g_IRQHandlers[irq](regs);
     }
     else{
-        puts("Unhandled IRQ \0");
-        put_intr(irq);
-        putc('\n');
+        printf("Unhandled IRQ %d \n", irq);
     }
 
     PIC_SendEndOfInterrupt(irq);

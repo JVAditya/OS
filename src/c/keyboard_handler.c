@@ -1,6 +1,7 @@
 #include <keyboard_handler.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <arch/testing.h>
 
 bool caps = false;
 
