@@ -1,0 +1,4 @@
+.cache/*
+build/[^/]*
+bochslog.txt
+bx_enh_dbg.ini
