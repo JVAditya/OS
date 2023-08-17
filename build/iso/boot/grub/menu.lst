@@ -1,0 +1,6 @@
+default=0
+timeout=0
+
+title JVos
+kernel /boot/kernel.elf
+gfxpayload=640x480x32

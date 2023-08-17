@@ -15,7 +15,7 @@ BOOT=$(ISO)/boot
 GRUB=$(BOOT)/grub
 OBJECTS_C=$(BUILD)/stdio.o $(BUILD)/main.o $(BUILD)/memory.o $(BUILD)/loadidt.o $(BUILD)/loadgdt.o $(BUILD)/loadisr.o $(BUILD)/io_util.o $(BUILD)/irq.o $(BUILD)/pic.o $(BUILD)/keyboard_handler.o $(BUILD)/paging.o
 OBJECTS_ASM=$(BUILD)/kernel.o $(BUILD)/header.o $(BUILD)/io.o $(BUILD)/idt.o $(BUILD)/gdt.o $(BUILD)/isr.o 
-OBJECTS_FONT=$(BUILD)/UbuntuMono-B-8x16.o $(BUILD)/UbuntuMono-R-8x16.o $(BUILD)/UbuntuMono-BI-8x16.o $(BUILD)/UbuntuMono-RI-8x16.o
+OBJECTS_FONT=$(BUILD)/UbuntuMono-R-8x16.o
 
 all: always $(BUILD)/os.iso 
 
