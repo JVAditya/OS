@@ -1,19 +1,19 @@
-MB_ALIGN                        equ 1 << 0
-MEM_INFO                        equ 1 << 1
-VIDEO                           equ 1 << 2
+MB_ALIGN                        equ 1 << 0  ; multiboot modules aligned to 4096 bytes
+MEM_INFO                        equ 1 << 1  ; provide memory info such as mem_low and mem_high
+VIDEO                           equ 1 << 2  ; provide a framebuffer to draw graphics
 
-MODE_TYPE                       equ 0
-WIDTH                           equ 640
-HEIGHT                          equ 480
-DEPTH                           equ 32
+MODE_TYPE                       equ 0       ; graphics mode - we need a framebuffer so set it to 0
+WIDTH                           equ 640     ; preferred width
+HEIGHT                          equ 480     ; preferred height
+DEPTH                           equ 32      ; preferred pixel depth
 HEADER_ADDR                     equ 0
 LOAD_ADDR                       equ 0
 LOAD_END_ADDR                   equ 0
 BSS_END_ADDR                    equ 0
 ENTRY_ADDR                      equ 0
 
-MAGIC_NUMBER                    equ 0x1BADB002
-FLAGS                           equ MB_ALIGN | MEM_INFO | VIDEO
+MAGIC_NUMBER                    equ 0x1BADB002 
+FLAGS                           equ MB_ALIGN | MEM_INFO | VIDEO 
 CHECKSUM                        equ -(MAGIC_NUMBER + FLAGS)
 
 section .boot

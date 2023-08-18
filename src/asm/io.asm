@@ -40,9 +40,11 @@ align 4096
         hlt
 
     EnableInterrupts:
+    ; Enable Interrupts (probably after setting up the descriptor tables)
         sti 
         ret
     
     DisableInterrupts:
+    ; Disable Interrupts (probably before setting up the descriptor tables)
         cli
         ret

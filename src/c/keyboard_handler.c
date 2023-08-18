@@ -5,7 +5,7 @@
 
 bool caps = false;
 
-char caps_char(char c, bool caps){
+char caps_char(char c, bool caps){  // for cpps lock key
     if(caps){
         return (c - 32);
     }

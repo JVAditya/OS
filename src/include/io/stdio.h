@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#define VGA_BUFFER_ADDR 0xC03FF000
+#define VGA_BUFFER_ADDR 0xC0000000
 
 #define FB_DATA_PORT 0x3D5
 #define FB_STATUS_PORT 0x3D4
@@ -54,7 +54,13 @@ typedef struct {
     uint8_t color_info[6];
 } __attribute__((packed)) FrameBufferInfo;
 
-void initialize_framebuffer(uint8_t* ebx);
+/*
+    Makes the framebuffer available to C code by passing the pointer to framebuffer data in multiboot info table.
+    Also calls graphics_pagr_entry function to map the framebuffer's physical address
+    This should be done before identity paging is disabled
+    @param fb_multiboot_info : Address of framebuffer data as returned in multiboot info table (before disabling identity paging)
+*/
+void initialize_framebuffer(uint8_t* fb_multiboot_info);
 
 #define PSF1_MAGIC0     0x36
 #define PSF1_MAGIC1     0x04
@@ -73,4 +79,7 @@ typedef struct {
     uint8_t charsize;     /* Character size */
 } __attribute__((packed)) PSF1_HEADER;
 
+/*
+    Loads the font file and initializes the array required for rendering the PSF fonnt.
+*/
 void initialize_psf();

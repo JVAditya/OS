@@ -11,8 +11,8 @@
 #include <arch/testing.h>
 #include <arch/dis_paging.h>
 
-extern uint32_t os_end;
-extern uint32_t os_start;
+extern uint32_t os_end_phy;
+extern uint32_t os_start_phy;
 
 void timer(Registers* regs){
     return;
@@ -25,11 +25,14 @@ void __attribute__((section(".text"), cdecl)) start(uint8_t* ebx, uint32_t eax){
         ebx contains the address to multiboot information structure
         eax contains the multiboot verification value
     */
+    DisableInterrupts();  //  is this line correct?
 
     initialize_gdt();
     initialize_idt();
     initialize_isr();
     initialize_irq();
+
+    EnableInterrupts();     // is this line correct?
 
     clrscr();
 
@@ -41,8 +44,10 @@ void __attribute__((section(".text"), cdecl)) start(uint8_t* ebx, uint32_t eax){
       for(;;);
     }
 
+    uint32_t framebuff = *(uint64_t*)(ebx + 88);
+
     // graphics framebuffer initialization
-    initialize_framebuffer(ebx);
+    initialize_framebuffer(ebx + 88);
 
     // font initialization
     initialize_psf();
@@ -59,15 +64,13 @@ void __attribute__((section(".text"), cdecl)) start(uint8_t* ebx, uint32_t eax){
     printf("Frame buffer width: %u\n", *(uint32_t*)(ebx + 100));
     printf("Frame buffer height: %u\n", *(uint32_t*)(ebx + 104));
     printf("Frame buffer depth: %u\n", *(uint8_t*)(ebx + 108));
-    printf("\n\t\t\tKernel starts at address %p and ends at address %p \n\n", (uint32_t)(&os_start), (uint32_t)(&os_end) - 0xC0000000);    
+    printf("\n\t\tKernel starts at phy. address %p and ends at phy. address %p \n\n", (uint32_t)(&os_start_phy), (uint32_t)(&os_end_phy));    
 
     // disable identity paging now
     disable_identity_paging();
 
     // let the C code know of the locations of page tables and page directory
-    reinitialize_paging();
-
-    printf("transl %x\n", get_physical_address((void*)0xC0100000));
+    reinitialize_paging(framebuff);
     
     for(;;);
 

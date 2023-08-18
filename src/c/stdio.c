@@ -3,10 +3,10 @@
 #include <arch/dis_paging.h>
 #include <stdbool.h>
 
-extern uint8_t _binary_utilities_UbuntuMono_R_8x16_psf_start;
-extern uint8_t _binary_utilities_UbuntuMono_R_8x16_psf_end;
+extern uint8_t _binary_utilities_Uni3_Terminus16_psf_start;
+extern uint8_t _binary_utilities_Uni3_Terminus16_psf_end;
 
-uint8_t* g_ScreenBuffer = (uint8_t*)(VGA_BUFFER_ADDR);
+// uint8_t* g_ScreenBuffer = (uint8_t*)(VGA_BUFFER_ADDR);
 int g_ScreenX = 0, g_ScreenY = 0;
 
 uint8_t* frame_buffer;
@@ -16,17 +16,19 @@ const uint32_t char_height = 16;	// in pixels
 
 // const uint32_t SCREEN_WIDTH = 80;
 // const uint32_t SCREEN_HEIGHT = 25;
-// const uint8_t DEFAULT_COLOR = 0x7;
+// const uint8_t DEFAULT_BKG_COLOR = 0x7;
 
 uint32_t SCREEN_WIDTH;
 uint32_t SCREEN_HEIGHT;
-uint32_t DEFAULT_COLOR = 0x0;
+uint32_t DEFAULT_BKG_COLOR = 0x0;
+uint32_t DEFAULT_CURSOR_COLOR = 0xffffff;
+uint32_t DEFAULT_FONT_COLOR = 0xffffff;
 
 PSF1_HEADER* font_header;
 uint8_t* font_data;
 
-void initialize_framebuffer(uint8_t* ebx){
-	FrameBufferInfo* fb = (FrameBufferInfo*)(ebx + 88);
+void initialize_framebuffer(uint8_t* fb_multiboot_info){
+	FrameBufferInfo* fb = (FrameBufferInfo*)(fb_multiboot_info);
 	frame_buffer = (uint8_t*)(fb->framebuffer_addr_low);
 	frame_buffer_width = fb->framebuffer_width;
 	frame_buffer_height = fb->framebuffer_height;
@@ -40,10 +42,9 @@ void initialize_framebuffer(uint8_t* ebx){
 	graphics_page_entry(fb->framebuffer_addr_low, frame_buffer_width, frame_buffer_height, frame_buffer_bpp);
 }
 
-// load font function
 void initialize_psf(){	
-	font_header = (PSF1_HEADER*)(&_binary_utilities_UbuntuMono_R_8x16_psf_start); 
-	font_data = (uint8_t*)(font_header) + 3;  // 3 is the size of header in PSF1
+	font_header = (PSF1_HEADER*)(&_binary_utilities_Uni3_Terminus16_psf_start); 
+	font_data = (uint8_t*)(font_header) + 3;  // 3 bytes is the size of header in PSF1
 }
 
 void clear_cell_gfx(uint32_t x, uint32_t y, uint32_t color){
@@ -57,6 +58,10 @@ void clear_cell_gfx(uint32_t x, uint32_t y, uint32_t color){
 	} 
 }
 
+void update_cursor(uint32_t x, uint32_t y){
+	clear_cell_gfx(x, y, DEFAULT_CURSOR_COLOR);
+}
+
 void put_chr(int x, int y, uint8_t ch){
     /*
         Places character ch at (x, y) on framebuffer. Each position has 2 bytes - character, color
@@ -67,15 +72,19 @@ void put_chr(int x, int y, uint8_t ch){
     // g_ScreenBuffer[2 * (x + y * SCREEN_WIDTH)] = ch;
 
 	uint8_t* glyph = font_data + ch*16;  // glyphs start after 3 bytes of header
-	uint32_t white = 0xffffff;
 	for(uint32_t r = 0; r < 16; r++){
 		uint8_t cols = 1 << 7;
 		for(uint32_t c = 0; c < 8; c++){
+			uint32_t index_ = (y*char_height + r)*(frame_buffer_pitch) + (x*char_width + c)*4;
 			if(*glyph & cols){
-				uint32_t index_ = (y*char_height + r)*(frame_buffer_pitch) + (x*char_width + c)*4;
-				frame_buffer[index_] = white & 0xff;
-				frame_buffer[index_ + 1] = (white >> 8) & 0xff;
-				frame_buffer[index_ + 2] = (white >> 16) & 0xff;
+				frame_buffer[index_] = DEFAULT_FONT_COLOR & 0xff;
+				frame_buffer[index_ + 1] = (DEFAULT_FONT_COLOR >> 8) & 0xff;
+				frame_buffer[index_ + 2] = (DEFAULT_FONT_COLOR >> 16) & 0xff;
+			}
+			else{
+				frame_buffer[index_] = 0;
+				frame_buffer[index_ + 1] = 0;
+				frame_buffer[index_ + 2] = 0;
 			}
 			cols = cols >> 1;
 		} 
@@ -83,35 +92,35 @@ void put_chr(int x, int y, uint8_t ch){
 	}
 }
 
-void put_color(int x, int y, uint8_t color){
-    /*
-        Foreground color is applied at (x, y) on framebuffer
-        @param x: x offset of character
-        @param y: y offset of character
-        @param color: foreground color of character | background color of character
-    */
-    g_ScreenBuffer[2 * (x + y * SCREEN_WIDTH) + 1] = color;
-}
+// void put_color(int x, int y, uint8_t color){
+//     /*
+//         Foreground color is applied at (x, y) on framebuffer
+//         @param x: x offset of character
+//         @param y: y offset of character
+//         @param color: foreground color of character | background color of character
+//     */
+//     g_ScreenBuffer[2 * (x + y * SCREEN_WIDTH) + 1] = color;
+// }
 
-uint8_t get_chr(int x, int y){
-    /*
-        Returns character placed at position (x, y) on framebuffer
-        @param x: x offset of character
-        @param y: y offset of character
-        @returns: character at position (x, y)
-    */
-    return g_ScreenBuffer[2 * (x + y * SCREEN_WIDTH)];
-}
+// uint8_t get_chr(int x, int y){
+//     /*
+//         Returns character placed at position (x, y) on framebuffer
+//         @param x: x offset of character
+//         @param y: y offset of character
+//         @returns: character at position (x, y)
+//     */
+//     return g_ScreenBuffer[2 * (x + y * SCREEN_WIDTH)];
+// }
 
-uint8_t get_color(int x, int y){
-    /*
-        Returns color of character placed at position (x, y) on framebuffer
-        @param x: x offset of character
-        @param y: y offset of character
-        @returns: color of character at position (x, y)
-    */
-    return g_ScreenBuffer[2 * (x + y * SCREEN_WIDTH) + 1];
-}
+// uint8_t get_color(int x, int y){
+//     /*
+//         Returns color of character placed at position (x, y) on framebuffer
+//         @param x: x offset of character
+//         @param y: y offset of character
+//         @returns: color of character at position (x, y)
+//     */
+//     return g_ScreenBuffer[2 * (x + y * SCREEN_WIDTH) + 1];
+// }
 
 void set_cursor(int x, int y){
     /*
@@ -130,6 +139,7 @@ void set_cursor(int x, int y){
 
 	g_ScreenX = x;
 	g_ScreenY = y;
+	update_cursor(x, y);
 }
 
 void clrscr(){
@@ -137,16 +147,17 @@ void clrscr(){
     // for(uint32_t y = 0; y < SCREEN_HEIGHT; y++){
     //     for(uint32_t x = 0; x < SCREEN_WIDTH; x++){
     //         put_chr(x, y, '\0');
-    //         put_color(x, y, DEFAULT_COLOR);
+    //         put_color(x, y, DEFAULT_BKG_COLOR);
     //     }
     // }
 
     // g_ScreenX = 0;
     // g_ScreenY = 0;
     // set_cursor(g_ScreenX, g_ScreenY);
+
 	for(uint32_t y = 0; y < SCREEN_HEIGHT; y++){
         for(uint32_t x = 0; x < SCREEN_WIDTH; x++){
-            clear_cell_gfx(x, y, DEFAULT_COLOR);
+            clear_cell_gfx(x, y, DEFAULT_BKG_COLOR);
         }
     }
 	g_ScreenX = 0;
@@ -156,7 +167,7 @@ void clrscr(){
 
 }
 
-void scrolldown(uint32_t num_lines){
+void scrolldown(uint32_t num_lines, bool hold_cursor){
     /* 
         scroll down is positive, scroll up is negative
         @param num_lines: Number of lines to scroll down
@@ -167,7 +178,7 @@ void scrolldown(uint32_t num_lines){
     //         put_chr(x, y, '\0');
             
     //         uint8_t color = get_color(x, y);
-    //         put_color(x, y, DEFAULT_COLOR);
+    //         put_color(x, y, DEFAULT_BKG_COLOR);
 
     //         put_chr(x, y - num_lines, chr);
     //         put_color(x, y - num_lines, color);
@@ -191,21 +202,62 @@ void scrolldown(uint32_t num_lines){
 			frame_buffer[index_ + 2] = 0;
 	    }
 	}
-	g_ScreenY -= num_lines;
-	if(g_ScreenY < 0){
-	    g_ScreenY = 0;
+	if(!hold_cursor){
+		g_ScreenY -= num_lines;
+		if(g_ScreenY < 0){
+			g_ScreenY = 0;
+		}
+	}
+	else{	// this means scrolling is due to cursor moving to next line (i.e. cursor was in the last row)
+		g_ScreenY = SCREEN_HEIGHT - 1;
 	}
 	set_cursor(g_ScreenX, g_ScreenY);
 }
 
 void putc(char c){
     
-    if(c == '\n'){
+    // if(c == '\n'){
+    //     g_ScreenX = 0;
+    //     g_ScreenY++;
+    //     if(g_ScreenY == (int)SCREEN_HEIGHT){
+    //         scrolldown(1, false);
+    //         g_ScreenY = SCREEN_HEIGHT - 1;
+    //     }
+    // }
+    // else if(c == '\r'){
+    //     g_ScreenX = 0;
+    // }
+    // else if(c == '\t'){
+    //     for (int i = 0; i < 4 - (g_ScreenX % 4); i++){
+    //         putc(' ');
+    //     }
+    // }
+    // else{
+    //     put_chr(g_ScreenX, g_ScreenY, c);
+    //     if(g_ScreenX < (int)SCREEN_WIDTH-1){
+    //         g_ScreenX++;
+    //     }
+    //     else{
+    //         g_ScreenX = 0;
+    //         if(g_ScreenY < (int)SCREEN_HEIGHT - 1){
+    //             g_ScreenY++;
+    //         }
+    //         else{
+    //             scrolldown(1, false);
+    //             g_ScreenY = (int)SCREEN_HEIGHT - 1;
+    //             return;
+    //         }
+    //     }
+    // }
+
+    // set_cursor(g_ScreenX, g_ScreenY);
+
+	if(c == '\n'){
+		clear_cell_gfx(g_ScreenX, g_ScreenY, DEFAULT_BKG_COLOR);
         g_ScreenX = 0;
         g_ScreenY++;
         if(g_ScreenY == (int)SCREEN_HEIGHT){
-            scrolldown(1);
-            g_ScreenY = SCREEN_HEIGHT - 1;
+            scrolldown(1, true);
         }
     }
     else if(c == '\r'){
@@ -227,9 +279,8 @@ void putc(char c){
                 g_ScreenY++;
             }
             else{
-                scrolldown(1);
-                g_ScreenY = (int)SCREEN_HEIGHT - 1;
-                return;
+                scrolldown(1, true);
+				return;
             }
         }
     }
@@ -423,7 +474,7 @@ int __attribute__((cdecl)) printf(const char *fmt, ...)
 					}
 					else
 					{
-						int8_t num_arr[65];
+						uint8_t num_arr[65];
 						uint8_t sign = '+';
 						int32_t curr_ind = 0;
 						if (num < 0)
