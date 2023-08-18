@@ -1,4 +1,6 @@
 .cache/*
 build/*.o
+build/*.iso
+build/iso/boot/*.elf
 bochslog.txt
 bx_enh_dbg.ini
